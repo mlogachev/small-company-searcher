@@ -2,18 +2,22 @@ import json
 import psycopg2
 
 
-def import_json(absolute_json_file_path, database, user):
+def import_json(absolute_json_file_path, **dbargs):
     """
-    Imports data to Postgres table
+    Imports data to Postgres table from json file
+
     :param str absolute_json_file_path: file path to given json to import
-    :param str database: database name
-    :param str user: database user
+    :param str host: Postgres host
+    :param str port: Postgres port
+    :param str database: Postgres database
+    :param str user: Postgres user
+    :param str password: Postgres password
     """
 
     with open(absolute_json_file_path, 'r') as fp:
         data = json.load(fp)
 
-    with psycopg2.connect(**dict(database=database, user=user)) as conn:
+    with psycopg2.connect(**dbargs) as conn:
         with conn.cursor() as cur:
             for row in data:
                 cur.execute(

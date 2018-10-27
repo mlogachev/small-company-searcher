@@ -3,7 +3,7 @@
 import click
 import os
 
-from load_json import import_json
+from import_json import import_json
 from get_office import get_office
 
 

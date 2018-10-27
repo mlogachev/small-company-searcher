@@ -1,21 +1,69 @@
 import psycopg2
 
+from collections import deque
+
+
+def get_parent_id(cur, id):
+    cur.execute(
+        'SELECT id FROM employers WHERE id = (SELECT parentid FROM employers WHERE id = %s)',
+        (id,)
+    )
+    res = cur.fetchone()
+    return res[0] if res is not None else res
+
+
+def execute_and_get_result(cursor, query, *params, **kwparams):
+    if kwparams:
+        cursor.execute(
+            query, kwparams
+        )
+    else:
+        cursor.execute(
+            query, params
+        )
+
+    return cursor.fetchall()
+
 
 def get_office(person_id):
     with psycopg2.connect(database="company", user="postgres") as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT name "
-                "FROM employers "
-                "WHERE "
-                "person = TRUE AND "
-                "officeid = (SELECT officeid from employers WHERE id = %s)",
-                (person_id,)
-            )
+            select_person = 'SELECT id FROM employers WHERE id = %s'
+            select_children = 'SELECT id FROM employers WHERE parentid = %s'
 
-            rows = cur.fetchall()
-            return [row[0] for row in rows]
+            if not execute_and_get_result(cur, select_person, person_id):
+                raise Exception("Does not exists")
+
+            if execute_and_get_result(cur, select_children, person_id):
+                raise Exception("Not a person")
+
+            top_node_id = person_id
+            parent_id = get_parent_id(cur, top_node_id)
+            while parent_id is not None:
+                top_node_id = parent_id
+                parent_id = get_parent_id(cur, top_node_id)
+
+            queue_of_nodes = deque()
+            queue_of_nodes.append(top_node_id)
+
+            office_colleagues = set()
+            while queue_of_nodes:
+                element_id = queue_of_nodes.popleft()
+
+                new_elements_ids = [
+                    row[0]
+                    for row in execute_and_get_result(cur, select_children, element_id)
+                ]
+                if not new_elements_ids:
+                    office_colleagues.add(element_id)
+                else:
+                    for idx in new_elements_ids:
+                        queue_of_nodes.append(idx)
+
+            sql = 'SELECT name FROM employers WHERE id IN %s'
+            return [row[0] for row in execute_and_get_result(cur, sql, tuple(office_colleagues))]
 
 
 if __name__ == '__main__':
-    get_office(3)
+    res = get_office(3)
+    print(res)

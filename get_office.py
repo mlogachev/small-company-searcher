@@ -19,6 +19,9 @@ def get_parent_id(cur, person_id):
 
 
 def execute_and_get_result(cursor, query, *params, **kwparams):
+    if kwparams and params:
+        raise Exception("Pass either params or keyword params, not both")
+
     if kwparams:
         cursor.execute(
             query, kwparams

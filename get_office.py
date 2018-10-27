@@ -2,11 +2,16 @@ import psycopg2
 
 from collections import deque
 
+SELECT_EMPLOYEES_WITH_IDS_SQL = 'SELECT name FROM employers WHERE id IN %s'
+SELECT_CHILDREN_SQL = 'SELECT id FROM employers WHERE parentid = %s'
+SELECT_PERSON_SQL = 'SELECT id FROM employers WHERE id = %s'
+SELECT_PARENT_ID_SQL = 'SELECT id FROM employers WHERE id = (SELECT parentid FROM employers WHERE id = %s)'
+
 
 def get_parent_id(cur, person_id):
     result = execute_and_get_result(
         cur,
-        'SELECT id FROM employers WHERE id = (SELECT parentid FROM employers WHERE id = %s)',
+        SELECT_PARENT_ID_SQL,
         person_id
     )
 
@@ -29,13 +34,10 @@ def execute_and_get_result(cursor, query, *params, **kwparams):
 def get_office(person_id):
     with psycopg2.connect(database="company", user="postgres") as conn:
         with conn.cursor() as cur:
-            select_person = 'SELECT id FROM employers WHERE id = %s'
-            select_children = 'SELECT id FROM employers WHERE parentid = %s'
-
-            if not execute_and_get_result(cur, select_person, person_id):
+            if not execute_and_get_result(cur, SELECT_PERSON_SQL, person_id):
                 raise Exception("Does not exists")
 
-            if execute_and_get_result(cur, select_children, person_id):
+            if execute_and_get_result(cur, SELECT_CHILDREN_SQL, person_id):
                 raise Exception("Not a person")
 
             top_node_id = person_id
@@ -53,7 +55,7 @@ def get_office(person_id):
 
                 new_elements_ids = [
                     row[0]
-                    for row in execute_and_get_result(cur, select_children, element_id)
+                    for row in execute_and_get_result(cur, SELECT_CHILDREN_SQL, element_id)
                 ]
                 if not new_elements_ids:
                     office_colleagues.add(element_id)
@@ -61,5 +63,7 @@ def get_office(person_id):
                     for idx in new_elements_ids:
                         queue_of_nodes.append(idx)
 
-            sql = 'SELECT name FROM employers WHERE id IN %s'
-            return [row[0] for row in execute_and_get_result(cur, sql, tuple(office_colleagues))]
+            return [
+                row[0]
+                for row in execute_and_get_result(cur, SELECT_EMPLOYEES_WITH_IDS_SQL, tuple(office_colleagues))
+            ]

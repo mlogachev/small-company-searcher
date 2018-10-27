@@ -3,13 +3,14 @@ import psycopg2
 from collections import deque
 
 
-def get_parent_id(cur, id):
-    cur.execute(
+def get_parent_id(cur, person_id):
+    result = execute_and_get_result(
+        cur,
         'SELECT id FROM employers WHERE id = (SELECT parentid FROM employers WHERE id = %s)',
-        (id,)
+        person_id
     )
-    res = cur.fetchone()
-    return res[0] if res is not None else res
+
+    return result[0] if result else None
 
 
 def execute_and_get_result(cursor, query, *params, **kwparams):
@@ -62,8 +63,3 @@ def get_office(person_id):
 
             sql = 'SELECT name FROM employers WHERE id IN %s'
             return [row[0] for row in execute_and_get_result(cur, sql, tuple(office_colleagues))]
-
-
-if __name__ == '__main__':
-    res = get_office(3)
-    print(res)

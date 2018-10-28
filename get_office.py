@@ -5,12 +5,18 @@ from collections import deque
 SELECT_EMPLOYEES_WITH_IDS_SQL = 'SELECT name FROM employers WHERE id IN %s'
 SELECT_CHILDREN_SQL = 'SELECT id FROM employers WHERE parentid = %s'
 SELECT_PERSON_SQL = 'SELECT id FROM employers WHERE id = %s'
-SELECT_PARENT_ID_SQL = 'SELECT id FROM employers WHERE id = (SELECT parentid FROM employers WHERE id = %s)'
+SELECT_PARENT_ID_SQL = 'SELECT parentid FROM employers WHERE id = %s'
 
 
-def get_parent_id(cur, person_id):
+def get_parent_id(cursor, person_id):
+    """
+    Returns parent id of given element
+    :param cursor: current cursor
+    :param int person_id: given person id
+    :return int|None: 
+    """
     result = execute_and_get_result(
-        cur,
+        cursor,
         SELECT_PARENT_ID_SQL,
         person_id
     )
@@ -19,6 +25,15 @@ def get_parent_id(cur, person_id):
 
 
 def execute_and_get_result(cursor, query, *params, **kwparams):
+    """
+    Executre given query using cursor, and return all resulted rows
+
+    :param cursor: cursor to given connection
+    :param query: SQL-string to execute
+    :param params: non keyword params, must supply either params, or kwparams
+    :param kwparams: keyword params, must supply either params, or kwparams
+    :return: results of query
+    """
     if kwparams and params:
         raise Exception("Pass either params or keyword params, not both")
 
@@ -34,8 +49,22 @@ def execute_and_get_result(cursor, query, *params, **kwparams):
     return cursor.fetchall()
 
 
-def get_office(person_id):
-    with psycopg2.connect(database="company", user="postgres") as conn:
+def get_office(person_id, **dbargs):
+    """
+    Find all colleagues of given person, working in the same office
+    Assumptions are:
+        - Office is a row in table, which does not have parent
+        - Person is a row in table, which does not have children
+        - Anything else is a department
+
+    :param int person_id: id of person in postgres table
+    :param str host: Postgres host
+    :param str port: Postgres port
+    :param str database: Postgres database
+    :param str user: Postgres user
+    :param str password: Postgres password
+    """
+    with psycopg2.connect(**dbargs) as conn:
         with conn.cursor() as cur:
             if not execute_and_get_result(cur, SELECT_PERSON_SQL, person_id):
                 raise Exception("Does not exists")

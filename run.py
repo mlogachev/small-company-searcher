@@ -9,11 +9,14 @@ from get_office import get_office
 
 @click.command('import')
 @click.argument('json_file')
-@click.option('--db', default='company', help='Postgres database name')
-@click.option('--user', default='postgres', help='Postgres user')
-def run_import(json_file, db, user):
+@click.option('--host', '-h', default='localhost', help="Postgres host")
+@click.option('--port', '-p', default='5432', help="Postgres port")
+@click.option('--database', '-d', default='company', help='Postgres database name')
+@click.option('--user', '-u', default='postgres', help='Postgres user')
+@click.option('--password', '-w', default='', help='Postgres user password')
+def run_import(json_file, **kwargs):
     fp = os.path.abspath(os.path.join(os.path.dirname(__file__), json_file))
-    import_json(fp, database=db, user=user)
+    import_json(fp, **kwargs)
 
 
 @click.command('office')

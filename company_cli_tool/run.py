@@ -15,7 +15,7 @@ from company_cli_tool.get_office import get_office
 @click.option('--user', '-u', default='postgres', help='Postgres user')
 @click.option('--password', '-w', default='', help='Postgres user password')
 def run_import(json_file, **kwargs):
-    fp = os.path.abspath(os.path.join(os.path.dirname(__file__), json_file))
+    fp = os.path.join(os.getcwd(), json_file)
     import_json(fp, **kwargs)
 
 
@@ -27,7 +27,7 @@ def run_import(json_file, **kwargs):
 @click.option('--user', '-u', default='postgres', help='Postgres user')
 @click.option('--password', '-w', default='', help='Postgres user password')
 def run_get_office(user_id, **kwargs):
-    print(get_office(int(user_id), **kwargs))
+    print(' '.join(get_office(int(user_id), **kwargs)))
 
 
 @click.group('do')

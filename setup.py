@@ -10,6 +10,6 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        company_searcher=company_cli_tool.run:do
+        com-cli-tool=company_cli_tool.run:do
     '''
 )

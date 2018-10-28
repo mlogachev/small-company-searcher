@@ -3,8 +3,8 @@ import psycopg2
 from collections import deque
 
 SELECT_EMPLOYEES_WITH_IDS_SQL = 'SELECT name FROM employers WHERE id IN %s'
-SELECT_CHILDREN_SQL = 'SELECT id FROM employers WHERE parentid = %s'
-SELECT_PERSON_SQL = 'SELECT id FROM employers WHERE id = %s'
+SELECT_CHILDREN_IDS_SQL = 'SELECT id FROM employers WHERE parentid = %s'
+SELECT_PERSON_ID_SQL = 'SELECT id FROM employers WHERE id = %s'
 SELECT_PARENT_ID_SQL = 'SELECT parentid FROM employers WHERE id = %s'
 
 
@@ -58,18 +58,18 @@ def get_office(person_id, **dbargs):
         - Anything else is a department
 
     :param int person_id: id of person in postgres table
-    :param str host: Postgres host
-    :param str port: Postgres port
-    :param str database: Postgres database
-    :param str user: Postgres user
-    :param str password: Postgres password
+    :keyword str host: Postgres host
+    :keyword str port: Postgres port
+    :keyword str database: Postgres database
+    :keyword str user: Postgres user
+    :keyword str password: Postgres password
     """
     with psycopg2.connect(**dbargs) as conn:
         with conn.cursor() as cur:
-            if not execute_and_get_result(cur, SELECT_PERSON_SQL, person_id):
+            if not execute_and_get_result(cur, SELECT_PERSON_ID_SQL, person_id):
                 raise Exception("Does not exists")
 
-            if execute_and_get_result(cur, SELECT_CHILDREN_SQL, person_id):
+            if execute_and_get_result(cur, SELECT_CHILDREN_IDS_SQL, person_id):
                 raise Exception("Not a person")
 
             top_node_id = person_id
@@ -81,21 +81,21 @@ def get_office(person_id, **dbargs):
             queue_of_nodes = deque()
             queue_of_nodes.append(top_node_id)
 
-            office_colleagues = set()
+            office_colleagues_ids = set()
             while queue_of_nodes:
                 element_id = queue_of_nodes.popleft()
 
                 new_elements_ids = [
                     row[0]
-                    for row in execute_and_get_result(cur, SELECT_CHILDREN_SQL, element_id)
+                    for row in execute_and_get_result(cur, SELECT_CHILDREN_IDS_SQL, element_id)
                 ]
                 if not new_elements_ids:
-                    office_colleagues.add(element_id)
+                    office_colleagues_ids.add(element_id)
                 else:
                     for idx in new_elements_ids:
                         queue_of_nodes.append(idx)
 
             return [
                 row[0]
-                for row in execute_and_get_result(cur, SELECT_EMPLOYEES_WITH_IDS_SQL, tuple(office_colleagues))
+                for row in execute_and_get_result(cur, SELECT_EMPLOYEES_WITH_IDS_SQL, tuple(office_colleagues_ids))
             ]

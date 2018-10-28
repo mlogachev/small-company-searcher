@@ -3,8 +3,8 @@
 import click
 import os
 
-from import_json import import_json
-from get_office import get_office
+from company_cli_tool.import_json import import_json
+from company_cli_tool.get_office import get_office
 
 
 @click.command('import')

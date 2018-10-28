@@ -1,15 +1,15 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
-    name='company_searcher',
+    name='company-cli-tool',
     version='0.1',
-    pymodules=['run'],
+    packages=find_packages(),
     install_requires=[
         'Click',
         'psycopg2',
     ],
     entry_points='''
         [console_scripts]
-        company_searcher=run:do
+        company_searcher=company_cli_tool.run:do
     '''
 )

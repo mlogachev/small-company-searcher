@@ -21,7 +21,7 @@ def get_parent_id(cursor, person_id):
         person_id
     )
 
-    return result[0] if result else None
+    return result[0][0] if result else None
 
 
 def execute_and_get_result(cursor, query, *params, **kwparams):

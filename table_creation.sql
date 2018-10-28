@@ -1,0 +1,5 @@
+CREATE TABLE employers (
+  id bigserial NOT NULL PRIMARY KEY,
+  ParentId BIGINT DEFAULT NULL ,
+  Name TEXT DEFAULT '' NOT NULL
+);

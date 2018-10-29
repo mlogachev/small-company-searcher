@@ -2,6 +2,8 @@ import psycopg2
 
 from collections import deque
 
+from .exceptions import QueryException
+
 SELECT_EMPLOYEES_WITH_IDS_SQL = 'SELECT name FROM employers WHERE id IN %s'
 SELECT_CHILDREN_IDS_SQL = 'SELECT id FROM employers WHERE parentid = %s'
 SELECT_PERSON_ID_SQL = 'SELECT id FROM employers WHERE id = %s'
@@ -67,10 +69,10 @@ def get_office(person_id, **dbargs):
     with psycopg2.connect(**dbargs) as conn:
         with conn.cursor() as cur:
             if not execute_and_get_result(cur, SELECT_PERSON_ID_SQL, person_id):
-                raise Exception("Does not exists")
+                raise QueryException("Record with id {} does not exists".format(person_id))
 
             if execute_and_get_result(cur, SELECT_CHILDREN_IDS_SQL, person_id):
-                raise Exception("Not a person")
+                raise QueryException("Record with id {} is not a person".format(person_id))
 
             top_node_id = person_id
             parent_id = get_parent_id(cur, top_node_id)
